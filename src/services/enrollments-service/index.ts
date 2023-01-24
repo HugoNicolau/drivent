@@ -1,17 +1,26 @@
 import { request } from "@/utils/request";
-import { notFoundError, requestError } from "@/errors";
+import { notFoundError, invalidCEPAddress } from "@/errors";
 import addressRepository, { CreateAddressParams } from "@/repositories/address-repository";
 import enrollmentRepository, { CreateEnrollmentParams } from "@/repositories/enrollment-repository";
 import { exclude } from "@/utils/prisma-utils";
 import { Address, Enrollment } from "@prisma/client";
-import httpStatus from "http-status";
+import { ViaCEPAddressCity } from "@/protocols";
 
-async function getAddressFromCEP(cep: string) {
+type ViaCEPError = {
+  erro: boolean;
+}
+async function getAddressFromCEP(cep: string): Promise<ViaCEPAddressCity | ViaCEPError> {
   const result = await request.get(`https://viacep.com.br/ws/${cep}/json/`);
 
   if (!result.data) {
     throw notFoundError();
   }
+
+  const response = result.data as ViaCEPError;
+  if(response.erro) {
+    return response;
+  }
+  
   const { logradouro, complemento, bairro, localidade, uf } = result.data;
   const formatedAddress = {
     logradouro,
@@ -19,7 +28,7 @@ async function getAddressFromCEP(cep: string) {
     bairro,
     cidade: localidade,
     uf
-  };
+  } as ViaCEPAddressCity;
   return(formatedAddress);
 }
 
@@ -52,9 +61,11 @@ async function createOrUpdateEnrollmentWithAddress(params: CreateOrUpdateEnrollm
   const address = getAddressForUpsert(params.address);
 
   //TODO - Verificar se o CEP é válido
-  if(address.cep==="00000-000" || address.cep.length!==9) {
-    throw requestError(httpStatus.BAD_REQUEST, "invalid cep");
+  const validateCep = await getAddressFromCEP(address.cep) as ViaCEPError;
+  if(validateCep.erro) {
+    throw invalidCEPAddress();
   }
+
   const newEnrollment = await enrollmentRepository.upsert(params.userId, enrollment, exclude(enrollment, "userId"));
 
   await addressRepository.upsert(newEnrollment.id, address, address);

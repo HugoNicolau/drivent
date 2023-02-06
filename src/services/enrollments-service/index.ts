@@ -1,35 +1,35 @@
-import { request } from "@/utils/request";
-import { notFoundError, invalidCEPAddress } from "@/errors";
+import { AddressEnrollment } from "@/protocols";
+import { getAddress } from "@/utils/cep-service";
+import { notFoundError } from "@/errors";
 import addressRepository, { CreateAddressParams } from "@/repositories/address-repository";
 import enrollmentRepository, { CreateEnrollmentParams } from "@/repositories/enrollment-repository";
 import { exclude } from "@/utils/prisma-utils";
 import { Address, Enrollment } from "@prisma/client";
-import { ViaCEPAddressCity } from "@/protocols";
 
-type ViaCEPError = {
-  erro: boolean;
-}
-async function getAddressFromCEP(cep: string): Promise<ViaCEPAddressCity | ViaCEPError> {
-  const result = await request.get(`https://viacep.com.br/ws/${cep}/json/`);
+async function getAddressFromCEP(cep: string): Promise<AddressEnrollment> {
+  const result = await getAddress(cep);
 
-  if (!result.data) {
+  if (!result) {
     throw notFoundError();
   }
 
-  const response = result.data as ViaCEPError;
-  if(response.erro) {
-    return response;
-  }
-  
-  const { logradouro, complemento, bairro, localidade, uf } = result.data;
-  const formatedAddress = {
-    logradouro,
+  const {
+    bairro,
+    localidade,
+    uf,
     complemento,
+    logradouro
+  } = result;
+
+  const address = {
     bairro,
     cidade: localidade,
-    uf
-  } as ViaCEPAddressCity;
-  return(formatedAddress);
+    uf,
+    complemento,
+    logradouro
+  };
+
+  return address;
 }
 
 async function getOneWithAddressByUserId(userId: number): Promise<GetOneWithAddressByUserIdResult> {
@@ -59,11 +59,10 @@ type GetAddressResult = Omit<Address, "createdAt" | "updatedAt" | "enrollmentId"
 async function createOrUpdateEnrollmentWithAddress(params: CreateOrUpdateEnrollmentWithAddress) {
   const enrollment = exclude(params, "address");
   const address = getAddressForUpsert(params.address);
+  const result = await getAddressFromCEP(address.cep);
 
-  //TODO - Verificar se o CEP é válido
-  const validateCep = await getAddressFromCEP(address.cep) as ViaCEPError;
-  if(validateCep.erro) {
-    throw invalidCEPAddress();
+  if (result.error) {
+    throw notFoundError();
   }
 
   const newEnrollment = await enrollmentRepository.upsert(params.userId, enrollment, exclude(enrollment, "userId"));

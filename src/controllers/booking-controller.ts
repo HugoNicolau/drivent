@@ -30,7 +30,7 @@ export async function postBooking(req: AuthenticatedRequest, res: Response) {
   
   try{
     const bookings = await bookingService.postBooking(Number(userId), body);
-    return res.status(httpStatus.OK).send(bookings);
+    return res.status(httpStatus.OK).send({ bookings });
   } catch (error) {
     if (error.name === "CannotPostBookingError") {
       return res.sendStatus(httpStatus.FORBIDDEN);
@@ -50,7 +50,7 @@ export async function updateBooking(req: AuthenticatedRequest, res: Response) {
   }
   try{
     const newBooking = await bookingService.updateBooking(Number(userId), body);
-    return res.status(httpStatus.OK).send(newBooking);
+    return res.status(httpStatus.OK).send({ newBooking });
   } catch (error) {
     if (error.name === "CannotPostBookingError") {
       return res.sendStatus(httpStatus.FORBIDDEN);

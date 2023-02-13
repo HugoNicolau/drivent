@@ -117,7 +117,6 @@ describe("POST /booking", () => {
       const enrollment = await createEnrollmentWithAddress(user);
       const ticketType = await createTicketTypeWithHotel();
       const ticket = await createTicket(enrollment.id, ticketType.id, TicketStatus.PAID);
-      const payment = await createPayment(ticket.id, ticketType.price);
 
       const createdHotel = await createHotel();
       const createdRoom = await createRoomWithHotelId(createdHotel.id);
@@ -130,7 +129,7 @@ describe("POST /booking", () => {
   
       expect(response.status).toEqual(httpStatus.OK);
   
-      expect(response.body).toEqual(booking.id);
+      expect(response.body.bookings).toEqual(booking.id);
     });
   });
 });
@@ -182,11 +181,11 @@ describe("PUT /booking/:bookingId", () => {
       const body = {
         roomId: createdRoom.id
       };
-      const response = await server.put("/booking/:bookingId").set("Authorization", `Bearer ${token}`).send(body);
+      const response = await server.put(`/booking/${booking.id}`).set("Authorization", `Bearer ${token}`).send(body);
     
       expect(response.status).toEqual(httpStatus.OK);
     
-      expect(response.body).toEqual(booking.id);
+      expect(response.body.newBooking).toEqual(booking.id);
     });
   });
 });

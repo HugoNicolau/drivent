@@ -4,3 +4,6 @@ node_modules
 !.env.example
 yarn.lock
 .vscode
+# Ignore test-related files
+/coverage.data
+/coverage/

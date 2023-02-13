@@ -49,13 +49,14 @@ async function postBooking(userId: number, body: BodyBooking) {
   await confirmUser(userId);
   const { roomId } = body;
   await findRoom(roomId);
+
   await isAvailable(roomId);
+
   const bookingData = {
     userId,
     roomId        
   };
   await bookingRepository.postBooking(bookingData);
-
   const booking = await bookingRepository.findBooking(userId);
   return booking.id;
 }

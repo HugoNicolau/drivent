@@ -11,7 +11,7 @@ async function getBooking(userId: number) {
   }
 
   return {
-    id: booking,
+    id: booking.id,
     Room: booking.Room
   };
 }
@@ -44,6 +44,7 @@ async function findRoom(roomId: number) {
     throw notFoundError();
   }
 }
+
 async function postBooking(userId: number, body: BodyBooking) {
   await confirmUser(userId);
   const { roomId } = body;
@@ -59,9 +60,24 @@ async function postBooking(userId: number, body: BodyBooking) {
   return booking.id;
 }
 
+async function updateBooking(userId: number, body: BodyBooking) {
+  await confirmUser(userId);
+  const { roomId } = body;
+  await findRoom(roomId);
+  await isAvailable(roomId);
+  const bookingData = {
+    userId,
+    roomId        
+  };
+  const booking = await getBooking(userId);
+  const newBooking = await bookingRepository.updateBooking(booking.id, bookingData);
+  return newBooking.id;
+}
+
 const bookingService = {
   getBooking,
-  postBooking
+  postBooking,
+  updateBooking
 };
 
 export default bookingService;

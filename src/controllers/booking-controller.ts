@@ -41,3 +41,23 @@ export async function postBooking(req: AuthenticatedRequest, res: Response) {
     return res.sendStatus(httpStatus.PAYMENT_REQUIRED);
   }
 }
+
+export async function updateBooking(req: AuthenticatedRequest, res: Response) {
+  const { userId } = req;
+  const body = req.body as Body;
+  if(!body.roomId) {
+    return res.sendStatus(httpStatus.BAD_REQUEST);
+  }
+  try{
+    const newBooking = await bookingService.updateBooking(Number(userId), body);
+    return res.status(httpStatus.OK).send(newBooking);
+  } catch (error) {
+    if (error.name === "CannotPostBookingError") {
+      return res.sendStatus(httpStatus.FORBIDDEN);
+    }
+    if (error.name === "NotFoundError") {
+      return res.sendStatus(httpStatus.NOT_FOUND);
+    }
+    return res.sendStatus(httpStatus.PAYMENT_REQUIRED);
+  }
+}

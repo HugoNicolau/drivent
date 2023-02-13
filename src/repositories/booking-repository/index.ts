@@ -42,13 +42,25 @@ async function postBooking(bookingData: CreateBookingParams) {
   });
 }
 
+async function updateBooking(currentRoom: number, bookingData: CreateBookingParams) {
+  return prisma.booking.update({
+    where: {
+      id: currentRoom
+    },
+    data: {
+      ...bookingData
+    }
+  });
+}
+
 export type CreateBookingParams = Omit<Booking, "id" | "createdAt" | "updatedAt">
 
 const bookingRepository = {
   findBooking,
   postBooking,
   isAvailable,
-  roomExists
+  roomExists,
+  updateBooking
 };
 
 export default bookingRepository;

@@ -131,6 +131,21 @@ describe("POST /booking", () => {
   
       expect(response.body.bookings).toEqual(booking.id);
     });
+    it("should respond with status 404 if theres no enrollment, ticket or tickettype", async () => {
+      const user = await createUser();
+      const token = await generateValidToken(user);
+  
+      const createdHotel = await createHotel();
+      const createdRoom = await createRoomWithHotelId(createdHotel.id);
+      const booking = await createBookingWithUserId(user.id, createdRoom.id);
+    
+      const body = {
+        roomId: createdRoom.id
+      };
+      const response = await server.post("/booking").set("Authorization", `Bearer ${token}`).send(body);
+    
+      expect(response.status).toEqual(httpStatus.NOT_FOUND);
+    });
   });
 });
 

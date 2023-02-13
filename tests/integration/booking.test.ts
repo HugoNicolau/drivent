@@ -126,7 +126,6 @@ describe("POST /booking", () => {
       const body = {
         roomId: createdRoom.id
       };
-      console.log(body, "body antes");
       const response = await server.post("/booking").set("Authorization", `Bearer ${token}`).send(body);
   
       expect(response.status).toEqual(httpStatus.OK);
@@ -136,16 +135,16 @@ describe("POST /booking", () => {
   });
 });
 
-describe("PUT /booking", () => {
+describe("PUT /booking/:bookingId", () => {
   it("should responde with status 401 if no token is given", async () => {
-    const response = await server.put("/booking");
+    const response = await server.put("/booking/:bookingId");
         
     expect(response.status).toBe(httpStatus.UNAUTHORIZED);
   });
   it("should respond with status 401 if given token is not valid", async () => {
     const token = faker.lorem.word();
     
-    const response = await server.put("/booking").set("Authorization", `Bearer ${token}`);
+    const response = await server.put("/booking/:bookingId").set("Authorization", `Bearer ${token}`);
     
     expect(response.status).toBe(httpStatus.UNAUTHORIZED);
   });
@@ -154,7 +153,7 @@ describe("PUT /booking", () => {
     const userWithoutSession = await createUser();
     const token = jwt.sign({ userId: userWithoutSession.id }, process.env.JWT_SECRET);
     
-    const response = await server.put("/booking").set("Authorization", `Bearer ${token}`);
+    const response = await server.put("/booking/:bookingId").set("Authorization", `Bearer ${token}`);
     
     expect(response.status).toBe(httpStatus.UNAUTHORIZED);
   });
@@ -163,7 +162,7 @@ describe("PUT /booking", () => {
       const user = await createUser();
       const token = await generateValidToken(user);
     
-      const response = await server.put("/booking").set("Authorization", `Bearer ${token}`);
+      const response = await server.put("/booking/:bookingId").set("Authorization", `Bearer ${token}`);
     
       expect(response.status).toEqual(httpStatus.BAD_REQUEST);
     });
@@ -183,8 +182,7 @@ describe("PUT /booking", () => {
       const body = {
         roomId: createdRoom.id
       };
-      console.log(body, "body antes");
-      const response = await server.put("/booking").set("Authorization", `Bearer ${token}`).send(body);
+      const response = await server.put("/booking/:bookingId").set("Authorization", `Bearer ${token}`).send(body);
     
       expect(response.status).toEqual(httpStatus.OK);
     
